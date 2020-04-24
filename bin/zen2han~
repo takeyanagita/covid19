@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+use utf8;
+use Encode qw/encode decode/;
+
+open (KDATA,"<","KouRouData/kourouKanjaDay.dat");
+while (my $line = <KDATA>) {
+    $line = decode('UTF-8', $line);
+    # 邪悪な全角文字を半角へ
+    $line =~ tr/、（）：０１２３４５６７８９/,():0123456789/;
+    $line = encode('UTF-8', $line);
+    print($line);
+}
