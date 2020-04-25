@@ -1,0 +1,98 @@
+#!/usr/bin/perl
+use utf8;
+use Encode qw/encode decode/;
+
+my $narg = @ARGV;
+if($narg != 1) {
+    print(encode('UTF-8',"使用法: getPrefDiff 都道府県名\n"));
+    exit(0);
+}
+$pref = $ARGV[0];
+$pref = decode('UTF-8', $pref);
+
+my $today = "";
+my $nyesterday = -1;
+my $totaldays;
+my @ndat;
+
+if(exists $ENV{KOUROUDATA}) {
+    my $KRDDir = $ENV{KOUROUDATA};
+    my $fn = $KRDDir . "/kourouKanjaDay.dat";
+    open(FHNDL,"<",$fn);
+} else {
+    open(FHNDL,"-");
+}
+while (my $line = <FHNDL>) {
+    chomp($line);
+    $line = decode('UTF-8', $line);
+    # 邪悪な全角文字を半角へ
+    $line =~ tr/、（）：０１２３４５６７８９/,():0123456789/;
+    # ()で囲まれたものを削除
+    # 原本には()が入れ子になっている行があったが，
+    # コードを書くのをサボって手作業で入れ子は除去した．
+    $line =~ s/\([^\(]*\)/ /g;
+    if($line =~ /^#/) {
+        $line =~ s/公表分//;
+        $today = encode('UTF-8',$line);
+        $line =~ s/^#/2020 /;
+        $line =~ s/月/ /;
+        $line =~ s/日/ /;
+        @ndat = split(/ /, $line);
+        # 2020年1月1日からの通算日(元日を0とする)
+        $totaldays = &getTotalDays(@ndat);
+    } elsif(($line =~ /^$pref/) && !($line =~ /:死亡/)) { # 感染のみ死亡は除外
+        if($nyesterday >= 0 && ($totaldays-$nyesterday) > 1) {
+            # 感染者0のレコードを挿入
+            for($ny=$nyesterday+1; $ny<$totaldays; $ny++) {
+                @dy = &getYrMonDay($ny);
+                print("#",@dy[1],encode('UTF-8',"月"),
+                      @dy[2],encode('UTF-8',"日 "),"0\n");
+            }
+            $nyesterday = $ny;
+        }
+        $line =~ s/[^0-9]*//;
+        $line =~ s/[例名][^0-9]*/ /;
+        $line =~ s/[例名].*//;
+        my $str = encode('UTF-8', $line);
+        print($today, " ", $str, "\n");
+        $nyesterday = $totaldays;
+    }
+}
+
+sub isLeap {
+    my ($y) = @_;
+    return (($y % 400) == 0 || (($y % 4) == 0 && ($y % 100) != 0));
+}
+
+sub getMonthDays {
+    my ($y, $m) = @_;
+    my $ret;
+    if($m == 2) {
+        if(&isLeap($y)) {$ret = 29;}
+        else {$ret = 28;}
+    } elsif($m == 4 || $m == 6 || $m == 6 || $m == 9 || $m == 11) {$ret = 30;}
+    else {$ret = 31;}
+    return $ret;
+}
+
+sub getTotalDays {
+    my ($y, $m, $d) = @_;
+    # 原点を2020年1月1日とする．これ以前は0日とする．
+    if($y < 2020) {return 0;}
+    my $td = 0;
+    for($i=2020; $i<$y; $i++) {
+        if(&isLeap($i)) {$td = $td + 366;}
+        else {$td = $td + 365;}
+    }
+    for($i=$m-1; $i>=1; $i--) {$td = $td + &getMonthDays($y, $i);}
+    $td = $td + $d-1;
+}
+
+sub getYrMonDay {
+    my $t = shift;
+    $t++;
+    for($y=2020; $t>&getTotalDays($y+1,1,1); $y++) {;}
+    for($m=1; $t>&getTotalDays($y, $m+1, 1); $m++) {;}
+    $d = $t - &getTotalDays($y, $m, 1);
+    return ($y, $m, $d);
+}

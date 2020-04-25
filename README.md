@@ -21,3 +21,18 @@ KouRouData/kourouKanjaDayHankaku.datを削除した．
 kourouKanjaDay.datへ4月21, 22, 23日公表分を追加した．Dataディレクトリを作成し，
 bin/zen2han < KouRouData/kourouKanjaDay.dat > Data/kourouKanjaDayHankaku.dat
 とした．
+
+2020/04/25 binへgetPrefDiff,getPrefDiffPlt,getZenkokuDiffのスクリプトを置いた．
+前2者はコマンドライン引数で指定した都道府県の各日の感染者数を出力する．
+元データに感染者数ゼロのレコードは無いが，グラフ表示等を考慮し感染者数0を
+挿入した．getPrefDiffPlt出力の第2項目は2020年1月1日を基点とした通算日，
+第3項目は患者，無症状感染者，陽性者の合計である．
+getZenkokuDiffは各都道府県の合計感染者．
+これらはkourouKanjaDay.datを標準入力から読むことを想定するが，
+環境変数KOUROUDATAでkourouKanjaDay.datの格納ディレクトリを指定すれば
+標準入力へデータを与える必要はない．
+例えば，
+export KOUROUDATA=$HOME/covid19work/KouRouData
+としておけば，
+getPrefDiff 埼玉県
+のようにすればよい．
