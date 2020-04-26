@@ -36,3 +36,8 @@ export KOUROUDATA=$HOME/covid19work/KouRouData
 としておけば，
 getPrefDiff 埼玉県
 のようにすればよい．
+
+2020/04/26 bin/へgetZenDeathDiff, getZenDeathDiffPlt, getZenDeathSum7を追加．
+厚労省4月25日公表分を追加．
+getZenDeathSum7は各通算日以前7日間の死亡者合計値のリストを標準出力へ出力．
+使用法は他と同じ．
